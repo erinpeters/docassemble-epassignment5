@@ -166,5 +166,4 @@ attachment:
     - docx
 buttons:
   - Exit: exit
-mandatory: true
 ---
