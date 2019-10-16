@@ -5,20 +5,29 @@ modules:
   - .LAAIndividual
 ---
 objects:
-  - client: Individual.using(complete_attribute="complete")
-  - family: DAList.using(object_type=Individual, complete_attribute='complete', ask_number=True)
+  - client: LAAIndividual.using(complete_attribute="complete")
+  - family: DAList.using(object_type=LAAIndividual, complete_attribute="complete")
 ---
 code:  |
   client.name.first
-  client.income
-  client.monthly_income
-  client.assets
+  client.annual_income.value
+  client.monthly_income.value
+  client.assets.value
   client.complete = True
+---
+code:  |
   family[i].name.first
-  family[i].income
-  family[i].monthly_income
-  family[i].assets
+  family[i].annual_income.value
+  family[i].monthly_income.value
+  family[i].assets.value
   family[i].complete = True
+---
+mandatory: True
+code:  |
+  # Interview flow block.
+  client.complete
+  family.gather()
+  results
 ---
 question:  |
   What is your name?
@@ -26,57 +35,49 @@ fields:
   - First Name: client.name.first
   - Last Name: client.name.last
 ---
-need: client.name.first
 question:  |
   What is your annual income?
 fields: 
-  - Income: client.income
+  - Income: client.annual_income.value
     datatype: currency
     min: 0
 ---
-need: client.income
 question:  |
   What is your monthly income?
 fields: 
-  - Monthly Income: client.monthly_income
+  - Monthly Income: client.monthly_income.value
     datatype: currency
     min: 0
 ---
-need: client.monthly_income
 question:  |
   What is the total value of your assets?
 fields: 
-  - Value of Assets: client.assets
+  - Value of Assets: client.assets.value
     datatype: currency
     min: 0
 ---
-question:  |  
-  Do you have any family members?
-yesno: family.there_is_another
----
-need: client.assets
-question: How many family members do you have, ${ client.name.first }? 
-fields:
-  - Number: family.target_number
-    datatype: number
-    min: 0
+question: Do you have any family members, ${ client.name.first }?
+yesno: family.there_are_any
 ---  
-question: Who is your ${ ordinal(i) } family member?
+question: What is the name of your ${ ordinal(i) } family member?
 fields:
   - First Name: family[i].name.first
   - Last Name: family[i].name.last
 ---
 question: Can you please provide some more information about ${ family[i].name }?
 fields:
-  - Annual Income: family[i].income
+  - Annual Income: family[i].annual_income.value
     datatype: currency
     min: 0
-  - Monthly Income: family[i].monthly_income
+  - Monthly Income: family[i].monthly_income.value
     datatype: currency
     min: 0
-  - Value of Assets: family[i].assets
+  - Value of Assets: family[i].assets.value
     datatype: currency
     min: 0
+---
+question: Do you have any other family members?
+yesno: family.there_is_another
 ---
 question:  |
   Do you already have a lawyer?
@@ -122,18 +123,18 @@ code:  |
   if is_criminal_matter or is_family_matter:
     eligible_matter = True
 
-  if (client.income < 10000) and (client.monthly_income < 500) and (client.assets < 1000):
+  if (client.annual_income.value < 10000) and (client.monthly_income.value < 500) and (client.assets.value < 1000):
     financially_eligible = True
   else:
     financially_eligible = False
     
-  if (client.income > 20000) or (client.monthly_income > 1500) or (client.assets > 10000):
+  if (client.annual_income.value > 20000) or (client.monthly_income.value > 1500) or (client.assets.value > 10000):
     financially_ineligible = True
   else:
     financially_ineligible = False
     
   if not financially_eligible and not financially_ineligible:
-      financially_eligible_marginally = True
+    financially_eligible_marginally = True
   else:
     financially_eligible_marginally = False
     
@@ -152,6 +153,7 @@ code:  |
   else:
     not_eligible = False
 ---
+event: results
 question: Thank you, ${ client }.
 subquestion:  |
   Here is your document.
