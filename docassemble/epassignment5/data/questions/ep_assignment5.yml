@@ -125,7 +125,7 @@ code:  |
     active_lawyer = False
   if active_lawyer:
     cant_afford_lawyer = False
-  if type_of_matter == "family" or "friminal":
+  if type_of_matter == "family" or "criminal":
     eligible_matter = True
 reconsider: True
 ---
