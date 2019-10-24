@@ -100,12 +100,17 @@ question:  |
 yesno: matter_in_alberta
 ---
 question:  |  
-  Is this legal matter a family law matter?
-yesno: is_family_matter
----
-question:  |  
-  Is this legal matter a criminal law matter?
-yesno: is_criminal_matter
+  Is this legal matter a family law matter or a criminal law matter?
+fields: 
+  - Type of Matter: type_of_matter
+    choices:
+      - family
+      - criminal
+      - other
+  - Other matter: type_of_matter
+    show if:
+      variable: type_of_matter
+      is: other
 ---
 question:  |  
   Do you live in Alberta?
@@ -120,38 +125,60 @@ code:  |
     active_lawyer = False
   if active_lawyer:
     cant_afford_lawyer = False
-  if is_criminal_matter or is_family_matter:
+  if type_of_matter == "family" or "friminal":
     eligible_matter = True
-
-  if (client.annual_income.value < 10000) and (client.monthly_income.value < 500) and (client.assets.value < 1000):
+reconsider: True
+---
+code:  |
+  family_assets = client.assets.value
+  family_monthly_income = client.monthly_income.value
+  family_annual_income = client.annual_income.value
+  for person in family:
+    family_assets += person.assets.value
+    family_monthly_income += person.monthly_income.value
+    family_annual_income += person.annual_income.value
+reconsider: True
+---
+code:  |
+  if (family_annual_income < 10000) and (family_monthly_income < 500) and (family_assets < 1000):
     financially_eligible = True
   else:
     financially_eligible = False
-    
-  if (client.annual_income.value > 20000) or (client.monthly_income.value > 1500) or (client.assets.value > 10000):
+reconsider: True
+---
+code:  |   
+  if (family_annual_income > 20000) or (family_monthly_income > 1500) or (family_assets > 10000):
     financially_ineligible = True
   else:
     financially_ineligible = False
-    
+reconsider: True
+---
+code:  |
   if not financially_eligible and not financially_ineligible:
     financially_eligible_marginally = True
   else:
     financially_eligible_marginally = False
-    
+reconsider: True
+---
+code:  |
   if financially_eligible and not active_lawyer and eligible_matter and not is_appeal and not not_in_alberta:
     eligible = True
   else:
     eligible = False
-    
+reconsider: True
+---
+code:  | 
   if financially_eligible_marginally and not active_lawyer and eligible_matter and not is_appeal and not not_in_alberta:
     marginally_eligible = True
   else:
     marginally_eligible = False
-    
+---
+code:  |
   if financially_ineligible or active_lawyer or not eligible_matter or is_appeal or not_in_alberta:
     not_eligible = True
   else:
     not_eligible = False
+reconsider: True
 ---
 event: results
 question: Thank you, ${ client }.
